@@ -1,5 +1,6 @@
 import React from 'react'
 import LoginForm from '../components/LoginForm'
+/* write a page component */  
 
 const page = () => {
   return (
