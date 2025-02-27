@@ -62,3 +62,26 @@ export const deletePatient = async (id: string) => {
     throw new Error("Unable to Delete Patients");
   }
 };
+
+export const downloadPdf = async () => {
+  console.log("Downloading");
+  const data = await fetch(`http://localhost:9001/downloadpdf`, {
+    credentials: "include",
+    method: "GET",
+  });
+  if (data.status === 200) {
+    const blob = await data.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "patient-report.pdf";
+    a.click();
+    window.URL.revokeObjectURL(url);
+  } else {
+    if (data.status === 401) {
+      window.location.href = "/login";
+      throw new Error("User not authenticated");
+    }
+    throw new Error("Unable to Download Patients");
+  }
+};

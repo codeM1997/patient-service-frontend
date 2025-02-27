@@ -1,13 +1,18 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { addPatient, deletePatient, fetchPatients } from "../services";
+import {
+  addPatient,
+  deletePatient,
+  downloadPdf,
+  fetchPatients,
+} from "../services";
 import { useRouter } from "next/navigation";
 import Modal from "./Modal";
 import { createModalHtml } from "../utils/util";
 
-const PatientTable = () => {
+const PatientTable = ({newPatient}:{newPatient:any}) => {
   const router = useRouter();
-  const [patients, setPatients] = useState([]);
+  const [patients, setPatients] = useState<any>([]);
   const [modal, setModal] = useState<any>({});
 
   useEffect(() => {
@@ -22,6 +27,17 @@ const PatientTable = () => {
         }
       });
   }, [router]);
+
+  useEffect(() => {
+    if(newPatient._id){
+      if(patients.findIndex((p: { _id: any; }) => p._id === newPatient._id) === -1){
+        setPatients([...patients, newPatient])
+    }}
+  
+    
+  }, [newPatient,patients])
+  
+
   const onCloseModal = () => {
     if (modal.type === "emergency") {
       setModal({});
@@ -36,7 +52,7 @@ const PatientTable = () => {
         test.close();
       }
       setModal({});
-      console.log('CALLED AGHAIN')
+      console.log("CALLED AGHAIN");
       fetchPatients()
         .then((res) => {
           console.log("response", res);
@@ -51,6 +67,7 @@ const PatientTable = () => {
         });
     }
   };
+  console.log('patients',patients)
   return (
     <div>
       <button
@@ -90,7 +107,12 @@ const PatientTable = () => {
                   <td>{patient.contactNo}</td>
                   <td>
                     <div className="flex items-center gap-2">
-                      <button>
+                      <button
+                        onClick={() => {
+                          console.log("clicked");
+                          downloadPdf();
+                        }}
+                      >
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           width={24}
