@@ -1,33 +1,45 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import PatientTable from "../components/PatientTable";
-import { io } from "socket.io-client";
-const socket = io("http://localhost:1997");
+import { io, Socket } from "socket.io-client";
+import Toast from "../components/Toast";
+
+// Keep track of the socket instance
+let socket: Socket | null = null;
+
 const Dashboard = () => {
   const [newPatient, setNewPatient] = useState<any>({});
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'warning' } | null>(null);
+
   useEffect(() => {
+    // Only create a new socket if one doesn't exist
+    if (!socket) {
+      socket = io("http://localhost:1997");
+    }
+
     socket.on("connect", () => {
-      console.log(socket.id); // x8WIv7-mJelg7on_ALbx
+      console.log("Connected:", socket?.id);
     });
+
     socket.on('connection-established-timeout', (data) => { 
-      console.log('connection-established-timeout',data)
-    })
+      console.log('Connection timeout:', data);
+    });
+
     socket.on('patient-created', (data) => {
-      console.log('patient-created',data)
+      console.log('New patient:', data);
       alert('A new patient has been added from database');
       setNewPatient(data);
+    });
 
-    })
+    // Cleanup function
     return () => {
-      socket.on("disconnect", () => {
-        console.log(socket.id); // undefined
-      });
-      socket.off('connect', ()=>{
-        console.log('disconnected')
-      });
-      socket.off('disconnect', ()=>{
-        console.log('disconnected')
-      });
+      if (socket) {
+        socket.off("connect");
+        socket.off("connection-established-timeout");
+        socket.off("patient-created");
+        socket.off("disconnect");
+        // Don't disconnect the socket, just remove the listeners
+      }
     };
   }, []);
 
@@ -36,7 +48,14 @@ const Dashboard = () => {
       <div className="navbar bg-neutral text-neutral-content">
         <a className="btn btn-ghost text-xl">Patient Dashboard</a>
       </div>
-      <PatientTable newPatient={newPatient} />
+      <PatientTable newPatient={newPatient} setToast={setToast} />
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 };

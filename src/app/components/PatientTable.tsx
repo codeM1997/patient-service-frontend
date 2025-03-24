@@ -9,8 +9,9 @@ import {
 import { useRouter } from "next/navigation";
 import Modal from "./Modal";
 import { createModalHtml } from "../utils/util";
+import Toast from "./Toast";
 
-const PatientTable = ({newPatient}:{newPatient:any}) => {
+const PatientTable = ({newPatient,setToast}:{newPatient:any,setToast:any}) => {
   const router = useRouter();
   const [patients, setPatients] = useState<any>([]);
   const [modal, setModal] = useState<any>({});
@@ -22,7 +23,7 @@ const PatientTable = ({newPatient}:{newPatient:any}) => {
       })
       .catch((err) => {
         if (err.message === "User not authenticated") {
-          alert("Please login");
+          setToast({ message: "Please login to continue", type: 'error' });
           router.push("/login");
         }
       });
@@ -31,12 +32,11 @@ const PatientTable = ({newPatient}:{newPatient:any}) => {
   useEffect(() => {
     if(newPatient._id){
       if(patients.findIndex((p: { _id: any; }) => p._id === newPatient._id) === -1){
-        setPatients([...patients, newPatient])
-    }}
-  
-    
-  }, [newPatient,patients])
-  
+        setPatients([...patients, newPatient]);
+        setToast({ message: "Patient added successfully", type: 'success' });
+      }
+    }
+  }, [newPatient,patients]);
 
   const onCloseModal = () => {
     if (modal.type === "emergency") {
@@ -52,24 +52,29 @@ const PatientTable = ({newPatient}:{newPatient:any}) => {
         test.close();
       }
       setModal({});
-      console.log("CALLED AGHAIN");
       fetchPatients()
         .then((res) => {
-          console.log("response", res);
-          console.log(res.status);
           setPatients(res);
         })
         .catch((err) => {
           if (err.message === "User not authenticated") {
-            alert("Please login");
+            setToast({ message: "Please login to continue", type: 'error' });
             router.push("/login");
           }
         });
     }
+    if (modal.type === "session-details") {
+      setModal({});
+      const test: any = document.getElementById("my_modal_1");
+      if (test.close) {
+        test.close();
+      }
+    }
   };
-  console.log('patients',patients)
+
   return (
     <div>
+      
       <button
         className="btn btn-primary rounded m-4"
         onClick={() => {
@@ -109,8 +114,29 @@ const PatientTable = ({newPatient}:{newPatient:any}) => {
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => {
-                          console.log("clicked");
-                          downloadPdf();
+                          setModal({
+                            type: "session-details",
+                            data: {
+                              patient,
+                              onSubmit: async (description: string, price: number) => {
+                                try {
+                                  await downloadPdf({
+                                    ...patient,
+                                    sessionDescription: description,
+                                    sessionPrice: price
+                                  });
+                                  setToast({ message: "PDF downloaded successfully", type: 'success' });
+                                  onCloseModal();
+                                } catch (error) {
+                                  setToast({ message: "Failed to download PDF", type: 'error' });
+                                }
+                              }
+                            }
+                          });
+                          const test: any = document.getElementById("my_modal_1");
+                          if (test.showModal) {
+                            test.showModal();
+                          }
                         }}
                       >
                         <svg
@@ -164,10 +190,13 @@ const PatientTable = ({newPatient}:{newPatient:any}) => {
                       </button>
                       <button
                         onClick={async () => {
-                          const updatedPatients = await deletePatient(
-                            patient._id
-                          );
-                          setPatients(updatedPatients);
+                          try {
+                            const updatedPatients = await deletePatient(patient._id);
+                            setPatients(updatedPatients);
+                            setToast({ message: "Patient deleted successfully", type: 'success' });
+                          } catch (error) {
+                            setToast({ message: "Failed to delete patient", type: 'error' });
+                          }
                         }}
                       >
                         <svg

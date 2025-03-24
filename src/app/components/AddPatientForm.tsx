@@ -211,5 +211,5 @@ const defaultPatient = {
 const defaultEmergencyContact = {
   name: "",
   number: "",
-  relationshipWithPatient: "",
+  relationshipWithPatient: "father",
 };
