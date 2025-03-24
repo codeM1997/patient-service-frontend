@@ -8,8 +8,11 @@ import Toast from "../components/Toast";
 let socket: Socket | null = null;
 
 const Dashboard = () => {
-  const [newPatient, setNewPatient] = useState<any>({});
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'warning' } | null>(null);
+  const [newPatient, setNewPatient] = useState<any>({data:{},operation:''});
+  const [toast, setToast] = useState<{
+    message: string;
+    type: "success" | "error" | "warning";
+  } | null>(null);
 
   useEffect(() => {
     // Only create a new socket if one doesn't exist
@@ -21,14 +24,26 @@ const Dashboard = () => {
       console.log("Connected:", socket?.id);
     });
 
-    socket.on('connection-established-timeout', (data) => { 
-      console.log('Connection timeout:', data);
+    socket.on("connection-established-timeout", (data) => {
+      console.log("Connection timeout:", data);
     });
 
-    socket.on('patient-created', (data) => {
-      console.log('New patient:', data);
-      alert('A new patient has been added from database');
-      setNewPatient(data);
+    socket.on("patient-created", (data) => {
+      console.log("New patient:", data);
+      setToast({ message: "A new patient has been added", type: "success" });
+      setNewPatient({ data: data, operation: "add" });
+    });
+
+    socket.on("patient-edited", (data) => {
+      console.log("Patient edited:", data);
+      setToast({ message: "Patient information updated", type: "success" });
+      setNewPatient({ data: data, operation: "edit" });
+    });
+
+    socket.on("patient-deleted", (data) => {
+      console.log("Patient deleted:", data);
+      setToast({ message: "Patient has been deleted", type: "warning" });
+      setNewPatient({ data: data, operation: "delete" });
     });
 
     // Cleanup function
@@ -37,6 +52,8 @@ const Dashboard = () => {
         socket.off("connect");
         socket.off("connection-established-timeout");
         socket.off("patient-created");
+        socket.off("patient-edited");
+        socket.off("patient-deleted");
         socket.off("disconnect");
         socket.disconnect();
       }

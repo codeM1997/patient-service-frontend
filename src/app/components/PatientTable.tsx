@@ -30,13 +30,23 @@ const PatientTable = ({newPatient,setToast}:{newPatient:any,setToast:any}) => {
   }, [router]);
 
   useEffect(() => {
-    if(newPatient._id){
-      if(patients.findIndex((p: { _id: any; }) => p._id === newPatient._id) === -1){
-        setPatients([...patients, newPatient]);
-        setToast({ message: "Patient added successfully", type: 'success' });
+    if(newPatient.data._id){
+      if(newPatient.operation === "add"){
+        if(patients.findIndex((p: { _id: any; }) => p._id === newPatient.data._id) === -1){
+          setPatients([...patients, newPatient.data]);
+          setToast({ message: "Patient added successfully", type: 'success' });
+        }
       }
+      if(newPatient.operation === "edit"){
+        setPatients(patients.map((p: { _id: any; }) => p._id === newPatient.data._id ? newPatient.data : p));
+        setToast({ message: "Patient updated successfully", type: 'success' });
+      }
+      if(newPatient.operation === "delete"){
+        setPatients(patients.filter((p: { _id: any; }) => p._id !== newPatient.data._id));
+        setToast({ message: "Patient deleted successfully", type: 'success' });
+      } 
     }
-  }, [newPatient,patients]);
+  }, [newPatient, patients, setToast]);
 
   const onCloseModal = () => {
     if (modal.type === "emergency") {
