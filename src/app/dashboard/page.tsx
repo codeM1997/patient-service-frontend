@@ -38,7 +38,7 @@ const Dashboard = () => {
         socket.off("connection-established-timeout");
         socket.off("patient-created");
         socket.off("disconnect");
-        // Don't disconnect the socket, just remove the listeners
+        socket.disconnect();
       }
     };
   }, []);
